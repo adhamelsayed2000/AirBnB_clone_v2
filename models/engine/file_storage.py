@@ -1,69 +1,66 @@
 #!/usr/bin/python3
-"""This module defines a class to manage file storage for hbnb clone"""
-import json
-import os
-from importlib import import_module
+"""
+FileStorage module
+"""
 
+import json
+from os.path import exists
 
 class FileStorage:
-    """This class manages storage of hbnb models in JSON format"""
-    __file_path = 'file.json'
+    """
+    FileStorage class
+    """
+    __file_path = "file.json"
     __objects = {}
 
-    def __init__(self):
-        """Initializes a FileStorage instance"""
-        self.model_classes = {
-            'BaseModel': import_module('models.base_model').BaseModel,
-            'User': import_module('models.user').User,
-            'State': import_module('models.state').State,
-            'City': import_module('models.city').City,
-            'Amenity': import_module('models.amenity').Amenity,
-            'Place': import_module('models.place').Place,
-            'Review': import_module('models.review').Review
-        }
-
     def all(self, cls=None):
-        """Returns a dictionary of models currently in storage"""
+        """
+        Return the dictionary __objects
+        """
         if cls is None:
             return self.__objects
         else:
-            filtered_dict = {}
-            for key, value in self.__objects.items():
-                if type(value) is cls:
-                    filtered_dict[key] = value
-            return filtered_dict
-
-    def delete(self, obj=None):
-        """Removes an object from the storage dictionary"""
-        if obj is not None:
-            obj_key = obj.to_dict()['__class__'] + '.' + obj.id
-            if obj_key in self.__objects.keys():
-                del self.__objects[obj_key]
+            filtered_objects = {}
+            for key, obj in self.__objects.items():
+                if isinstance(obj, cls):
+                    filtered_objects[key] = obj
+            return filtered_objects
 
     def new(self, obj):
-        """Adds new object to storage dictionary"""
-        self.__objects.update(
-            {obj.to_dict()['__class__'] + '.' + obj.id: obj}
-        )
+        """
+        Set in __objects the obj with key <obj class name>.id
+        """
+        key = "{}.{}".format(obj.__class__.__name__, obj.id)
+        self.__objects[key] = obj
 
     def save(self):
-        """Saves storage dictionary to file"""
-        with open(self.__file_path, 'w') as file:
-            temp = {}
-            for key, val in self.__objects.items():
-                temp[key] = val.to_dict()
-            json.dump(temp, file)
+        """
+        Serialize __objects to the JSON file (path: __file_path)
+        """
+        obj_dict = {}
+        for key, obj in self.__objects.items():
+            obj_dict[key] = obj.to_dict()
+        with open(self.__file_path, "w", encoding="utf-8") as f:
+            json.dump(obj_dict, f)
 
     def reload(self):
-        """Loads storage dictionary from file"""
-        classes = self.model_classes
-        if os.path.isfile(self.__file_path):
-            temp = {}
-            with open(self.__file_path, 'r') as file:
-                temp = json.load(file)
-                for key, val in temp.items():
-                    self.all()[key] = classes[val['__class__']](**val)
+        """
+        Deserialize the JSON file (path: __file_path) to __objects
+        """
+        if exists(self.__file_path):
+            with open(self.__file_path, "r", encoding="utf-8") as f:
+                obj_dict = json.load(f)
+                for key, obj in obj_dict.items():
+                    class_name = obj['__class__']
+                    del obj['__class__']
+                    self.__objects[key] = eval(class_name)(**obj)
 
-    def close(self):
-        """Closes the storage engine."""
-        self.reload()
+    def delete(self, obj=None):
+        """
+        Deletes obj from __objects if it's inside
+        """
+        if obj is None:
+            return
+        key = "{}.{}".format(obj.__class__.__name__, obj.id)
+        if key in self.__objects:
+            del self.__objects[key]
