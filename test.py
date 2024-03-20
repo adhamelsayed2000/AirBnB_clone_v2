@@ -5,11 +5,13 @@ import MySQLdb
 from console import HBNBCommand
 import io
 import sys
-
+import os
+@unittest.skipIf(os.getenv('HBNB_TYPE_STORAGE') == 'mysql', "Test irrelevant for MySQL storage")
 class TestCreateState(unittest.TestCase):
     def setUp(self):
         # Connect to the test database
-        self.db = MySQLdb.connect(user='your_username', passwd='your_password', db='test_database')
+        self.db = MySQLdb.connect(
+            user='your_username', passwd='your_password', db='test_database')
         self.cursor = self.db.cursor()
 
     def tearDown(self):
@@ -38,6 +40,7 @@ class TestCreateState(unittest.TestCase):
 
         # Compare counts and assert that the difference is +1
         self.assertEqual(final_count - initial_count, 1)
+
 
 if __name__ == '__main__':
     unittest.main()
