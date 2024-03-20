@@ -113,18 +113,55 @@ class HBNBCommand(cmd.Cmd):
         """ Overrides the emptyline method of CMD """
         pass
 
-    def do_create(self, args):
-        """ Create an object of any class"""
-        if not args:
-            print("** class name missing **")
-            return
-        elif args not in HBNBCommand.classes:
-            print("** class doesn't exist **")
-            return
-        new_instance = HBNBCommand.classes[args]()
-        storage.save()
-        print(new_instance.id)
-        storage.save()
+    def do_create(self, arg):
+    """
+    Creates a new instance of a class with given parameters.
+    Usage: create <Class name> <param 1> <param 2> <param 3>...
+    Param syntax: <key name>=<value>
+    Value syntax:
+        String: "<value>" => starts with a double quote
+            any double quote inside the value must be escaped with a backslash \
+            all underscores _ must be replace by spaces . Example: You want to set the string My little house to the attribute name, your command line must be name="My_little_house"
+        Float: <unit>.<decimal> => contains a dot .
+        Integer: <number> => default case
+    If any parameter doesn’t fit with these requirements or can’t be recognized correctly by your program, it must be skipped
+    """
+    if not arg:
+        print("** class name missing **")
+        return
+
+    args = arg.split()
+    class_name = args[0]
+
+    if class_name not in classes:
+        print("** class doesn't exist **")
+        return
+
+    params = {}
+    for item in args[1:]:
+        if '=' not in item:
+            continue
+        key, value = item.split('=', 1)
+        key = key.strip()
+        value = value.strip()
+
+        if value.startswith('"') and value.endswith('"'):
+            value = value[1:-1].replace('_', ' ')
+            value = value.replace('\\"', '"')
+
+        try:
+            if '.' in value:
+                value = float(value)
+            else:
+                value = int(value)
+        except ValueError:
+            pass
+
+        params[key] = value
+
+    instance = classes[class_name](**params)
+    instance.save()
+    print(instance.id)
 
     def help_create(self):
         """ Help information for the create method """
