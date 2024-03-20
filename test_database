@@ -1,0 +1,36 @@
+import unittest
+import MySQLdb
+
+class TestDatabase(unittest.TestCase):
+    def setUp(self):
+        # Connect to the testing database
+        self.db = MySQLdb.connect(
+            host='localhost',
+            user='test_user',
+            passwd='test_password',
+            db='test_database'
+        )
+        self.cursor = self.db.cursor()
+
+    def tearDown(self):
+        # Close the database connection
+        self.db.close()
+
+    def test_insert_record(self):
+        # Get the initial count of records
+        self.cursor.execute("SELECT COUNT(*) FROM your_table")
+        initial_count = self.cursor.fetchone()[0]
+
+        # Execute the command to insert a record into the database
+        self.cursor.execute("INSERT INTO your_table (column1, column2) VALUES ('value1', 'value2')")
+        self.db.commit()
+
+        # Get the count of records after insertion
+        self.cursor.execute("SELECT COUNT(*) FROM your_table")
+        final_count = self.cursor.fetchone()[0]
+
+        # Check if the difference is +1
+        self.assertEqual(final_count, initial_count + 1)
+
+if __name__ == '__main__':
+    unittest.main()
